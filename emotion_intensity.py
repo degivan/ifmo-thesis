@@ -4,7 +4,7 @@ from itertools import takewhile
 from numpy import average
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.model_selection import KFold
-from sklearn.naive_bayes import GaussianNB
+from sklearn.naive_bayes import GaussianNB, MultinomialNB
 
 from tweet_parser import *
 
@@ -22,7 +22,7 @@ def get_side(y, border):
 
 def get_classifier(X, Y, border):
     border_y = [get_side(y, border) for y in Y]
-    clf = GaussianNB()
+    clf = MultinomialNB()
     clf.fit(X, border_y)
     return clf
 
