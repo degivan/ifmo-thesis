@@ -8,8 +8,8 @@ from sklearn.naive_bayes import GaussianNB
 from tweet_parser import *
 
 
-def getXY():
-    vectorizer = CountVectorizer(ngram_range=(1, 2), token_pattern=r'\b\w+\b')
+def get_XY():
+    vectorizer = CountVectorizer()
     X = vectorizer.fit_transform([t.message for t in tweets]).toarray()
     Y = [t.cl for t in tweets]
     return X, Y
@@ -20,7 +20,7 @@ if __name__ == '__main__':
     parser.add_argument('-f', type=file, dest='data', help='data')
     args = parser.parse_args()
     tweets = get_tweets(args.data.read())
-    X, Y = getXY()
+    X, Y = get_XY()
     kf = KFold(n_splits=10, shuffle=True)
     accuracies = []
     for train_index, test_index in kf.split(X):
