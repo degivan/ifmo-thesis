@@ -64,3 +64,4 @@ if __name__ == '__main__':
         classifiers = [get_classifier(train_X, train_Y, b) for b in [0, 1, 2]]
         accuracies.append(count_accuracy(classifiers, test_X, test_Y))
     print(average(accuracies))
+
