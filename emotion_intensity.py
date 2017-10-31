@@ -1,4 +1,5 @@
 import argparse
+from itertools import takewhile
 
 from numpy import average
 from sklearn.feature_extraction.text import CountVectorizer
@@ -26,17 +27,22 @@ def get_classifier(X, Y, border):
     return clf
 
 
+def get_answer(results):
+    from_start = len(list(takewhile(lambda x: x == 1, results)))
+    results.reverse()
+    from_end = len(list(takewhile(lambda x: x == 0, results)))
+    if (from_start + from_end) == len(results):
+        return from_start
+    else:
+        return len(results) - from_end
+
+
 def count_accuracy(classifiers, X, Y):
     total = len(Y)
     correct = 0
     for x, y in zip(X, Y):
         results = [clf.predict([x]) for clf in classifiers]
-        final_result = 0
-        while final_result < 3:
-            if results[final_result] == 1:
-                final_result += 1
-            else:
-                break
+        final_result = get_answer(results)
         if final_result == y:
             correct += 1
     return correct / float(total)
