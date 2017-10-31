@@ -1,5 +1,6 @@
 import argparse
 
+from numpy import average
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.model_selection import KFold
 from sklearn.naive_bayes import GaussianNB
@@ -21,6 +22,7 @@ if __name__ == '__main__':
     tweets = get_tweets(args.data.read())
     X, Y = getXY()
     kf = KFold(n_splits=10, shuffle=True)
+    accuracies = []
     for train_index, test_index in kf.split(X):
         clf = GaussianNB()
         train_X = [X[i] for i in train_index]
@@ -28,5 +30,5 @@ if __name__ == '__main__':
         test_X = [X[i] for i in test_index]
         test_Y = [Y[i] for i in test_index]
         clf.fit(train_X, train_Y)
-        print(clf.score(test_X, test_Y))
-    print(set([t.cl for t in tweets]))
+        accuracies.append(clf.score(test_X, test_Y))
+    print(average(accuracies))
