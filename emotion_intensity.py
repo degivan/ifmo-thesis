@@ -9,7 +9,7 @@ from tweet_parser import *
 
 
 def getXY():
-    vectorizer = CountVectorizer()
+    vectorizer = CountVectorizer(ngram_range=(1, 2), token_pattern=r'\b\w+\b')
     X = vectorizer.fit_transform([t.message for t in tweets]).toarray()
     Y = [t.cl for t in tweets]
     return X, Y
