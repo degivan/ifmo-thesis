@@ -1,15 +1,16 @@
 import argparse
+from collections import defaultdict
 from itertools import takewhile
 
 from numpy import average
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.model_selection import KFold
-from sklearn.naive_bayes import GaussianNB, MultinomialNB
+from sklearn.naive_bayes import MultinomialNB
 
 from tweet_parser import *
 
 
-def get_XY():
+def get_XY(tweets):
     vectorizer = CountVectorizer()
     X = vectorizer.fit_transform([t.message for t in tweets]).toarray()
     Y = [t.cl for t in tweets]
@@ -48,20 +49,44 @@ def count_accuracy(classifiers, X, Y):
     return correct / float(total)
 
 
+def print_class_distribution():
+    classes = defaultdict(int)
+    for tweet in tweets:
+        classes[tweet.cl] += 1
+    print classes
+
+
+def filter_index(X, index):
+    return [X[i] for i in index]
+
+
+def test_basic_classifier(train_X, train_Y, test_X, test_Y):
+    comp_clf = MultinomialNB()
+    comp_clf.fit(train_X, train_Y)
+    print (comp_clf.score(test_X, test_Y))
+
+
+def test_ordinal_classifier(train_X, train_Y, test_X, test_Y, accuracies):
+    classifiers = [get_classifier(train_X, train_Y, b) for b in [0, 1, 2]]
+    accuracies.append(count_accuracy(classifiers, test_X, test_Y))
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='File name')
     parser.add_argument('-f', type=file, dest='data', help='data')
     args = parser.parse_args()
+
     tweets = get_tweets(args.data.read())
-    X, Y = get_XY()
+    print_class_distribution()
+
+    X, Y = get_XY(tweets)
     kf = KFold(n_splits=10, shuffle=True)
     accuracies = []
     for train_index, test_index in kf.split(X):
-        train_X = [X[i] for i in train_index]
-        train_Y = [Y[i] for i in train_index]
-        test_X = [X[i] for i in test_index]
-        test_Y = [Y[i] for i in test_index]
-        classifiers = [get_classifier(train_X, train_Y, b) for b in [0, 1, 2]]
-        accuracies.append(count_accuracy(classifiers, test_X, test_Y))
+        train_X = filter_index(X, train_index)
+        train_Y = filter_index(Y, train_index)
+        test_X = filter_index(X, test_index)
+        test_Y = filter_index(Y, test_index)
+        test_basic_classifier(train_X, train_Y, test_X, test_Y)
+        test_ordinal_classifier(train_X, train_Y, test_X, test_Y, accuracies)
     print(average(accuracies))
-
