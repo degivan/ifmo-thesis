@@ -13,7 +13,7 @@ from tweet_parser import *
 def get_XY(tweets):
     vectorizer = CountVectorizer()
     X = vectorizer.fit_transform([t.message for t in tweets]).toarray()
-    Y = [t.cl for t in tweets]
+    Y = [t.res for t in tweets]
     return X, Y
 
 
@@ -52,7 +52,7 @@ def count_accuracy(classifiers, X, Y):
 def print_class_distribution():
     classes = defaultdict(int)
     for tweet in tweets:
-        classes[tweet.cl] += 1
+        classes[tweet.res] += 1
     print classes
     print len(tweets)
 
