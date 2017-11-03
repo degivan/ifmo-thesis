@@ -54,6 +54,7 @@ def print_class_distribution():
     for tweet in tweets:
         classes[tweet.cl] += 1
     print classes
+    print len(tweets)
 
 
 def filter_index(X, index):
@@ -89,4 +90,4 @@ if __name__ == '__main__':
         test_Y = filter_index(Y, test_index)
         test_basic_classifier(train_X, train_Y, test_X, test_Y)
         test_ordinal_classifier(train_X, train_Y, test_X, test_Y, accuracies)
-    print(average(accuracies))
+    print("Average ordinal: " + str(average(accuracies)))
