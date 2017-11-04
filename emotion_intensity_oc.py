@@ -61,10 +61,10 @@ def filter_index(X, index):
     return [X[i] for i in index]
 
 
-def test_basic_classifier(train_X, train_Y, test_X, test_Y):
+def test_basic_classifier(train_X, train_Y, test_X, test_Y, accuracies):
     comp_clf = MultinomialNB()
     comp_clf.fit(train_X, train_Y)
-    print (comp_clf.score(test_X, test_Y))
+    accuracies.append(comp_clf.score(test_X, test_Y))
 
 
 def test_ordinal_classifier(train_X, train_Y, test_X, test_Y, accuracies):
@@ -82,12 +82,14 @@ if __name__ == '__main__':
 
     X, Y = get_XY(tweets)
     kf = KFold(n_splits=10, shuffle=True)
-    accuracies = []
+    basic_accuracies = []
+    ord_accuracies = []
     for train_index, test_index in kf.split(X):
         train_X = filter_index(X, train_index)
         train_Y = filter_index(Y, train_index)
         test_X = filter_index(X, test_index)
         test_Y = filter_index(Y, test_index)
-        test_basic_classifier(train_X, train_Y, test_X, test_Y)
-        test_ordinal_classifier(train_X, train_Y, test_X, test_Y, accuracies)
-    print("Average ordinal: " + str(average(accuracies)))
+        test_basic_classifier(train_X, train_Y, test_X, test_Y, basic_accuracies)
+        test_ordinal_classifier(train_X, train_Y, test_X, test_Y, ord_accuracies)
+    print("Average ordinal: " + str(average(ord_accuracies)))
+    print("Average basic: " + str(average(basic_accuracies)))
