@@ -1,0 +1,25 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+Let's load our data.
+```{r}
+dat <- readLines("/home/vanyadeg/Desktop/diploma/data/EIoc/EI-oc-En-anger-train.txt")
+
+dat = as.data.frame(do.call(rbind, strsplit(dat, split="\t")), stringsAsFactors=FALSE)
+
+dat = dat[c("V2", "V4")]
+head(dat)
+```
+And rename columns.
+```{r}
+library(plyr)
+dat = rename(dat, c("V2" = "tweet", "V4" = "class"))
+head(dat)
+```
+Let's analyze!
+```{r}
+percentage <- prop.table(table(dat$class)) * 100
+cbind(freq=table(dat$class), percentage=percentage)
+```
+
