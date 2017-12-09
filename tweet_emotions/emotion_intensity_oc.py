@@ -8,7 +8,7 @@ from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.model_selection import KFold
 from sklearn.naive_bayes import MultinomialNB
 
-from tweet_emotions.features import count_caps, count_symbol, starts_with_vowel
+from tweet_emotions.features import count_caps, count_symbol, count_intensity
 from tweet_parser import *
 
 
@@ -84,25 +84,26 @@ def test_mord_classifier(train_X, train_Y, test_X, test_Y, accuracies):
     accuracies.append(acc)
 
 
-def add_features(X, tweets):
+def add_features(X, tweets, emotion):
     X_list = X.tolist()
     for x, tweet in zip(X_list, tweets):
         x.append(count_caps(tweet))
         x.append(count_symbol(tweet, '!'))
-        # x.append(starts_with_vowel(tweet))
+        x.append(count_intensity(tweet, emotion))
     return np.array(X_list)
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='File name')
     parser.add_argument('-f', type=file, dest='data', help='data')
+    parser.add_argument('-e', type=str, dest='emotion', help='emotion')
     args = parser.parse_args()
 
     tweets = get_tweets(args.data.read())
     print_class_distribution()
 
     X, Y = get_XY(tweets)
-    X = add_features(X, tweets)
+    X = add_features(X, tweets, args.emotion)
     Y = [int(y) for y in Y]
     kf = KFold(n_splits=10, shuffle=True)
     basic_accuracies = []
