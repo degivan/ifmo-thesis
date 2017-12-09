@@ -8,6 +8,7 @@ from sklearn.model_selection import KFold
 from sklearn.naive_bayes import MultinomialNB
 
 from tweet_parser import *
+from mord import *
 
 
 def get_XY(tweets):
@@ -63,13 +64,23 @@ def filter_index(X, index):
 
 def test_basic_classifier(train_X, train_Y, test_X, test_Y, accuracies):
     comp_clf = MultinomialNB()
-    comp_clf.fit(train_X, train_Y)
-    accuracies.append(comp_clf.score(test_X, test_Y))
+    comp_clf.fit(np.array(train_X), np.array(train_Y))
+    predicted = comp_clf.predict(np.array(test_X))
+    acc = metrics.accuracy_score(np.array(test_Y), predicted)
+    accuracies.append(acc)
 
 
 def test_ordinal_classifier(train_X, train_Y, test_X, test_Y, accuracies):
     classifiers = [get_classifier(train_X, train_Y, b) for b in [0, 1, 2]]
     accuracies.append(count_accuracy(classifiers, test_X, test_Y))
+
+
+def test_mord_classifier(train_X, train_Y, test_X, test_Y, accuracies):
+    comp_clf = LogisticIT(alpha=0, max_iter=10000)
+    comp_clf.fit(np.array(train_X), np.array(train_Y))
+    predicted = comp_clf.predict(np.array(test_X))
+    acc = metrics.accuracy_score(np.array(test_Y), predicted)
+    accuracies.append(acc)
 
 
 if __name__ == '__main__':
@@ -81,9 +92,11 @@ if __name__ == '__main__':
     print_class_distribution()
 
     X, Y = get_XY(tweets)
-    kf = KFold(n_splits=10, shuffle=True)
+    Y = [int(y) for y in Y]
+    kf = KFold(n_splits=5, shuffle=True)
     basic_accuracies = []
     ord_accuracies = []
+    mord_accuracies = []
     for train_index, test_index in kf.split(X):
         train_X = filter_index(X, train_index)
         train_Y = filter_index(Y, train_index)
@@ -91,5 +104,7 @@ if __name__ == '__main__':
         test_Y = filter_index(Y, test_index)
         test_basic_classifier(train_X, train_Y, test_X, test_Y, basic_accuracies)
         test_ordinal_classifier(train_X, train_Y, test_X, test_Y, ord_accuracies)
+        test_mord_classifier(train_X, train_Y, test_X, test_Y, mord_accuracies)
     print("Average basic: " + str(average(basic_accuracies)))
     print("Average ordinal: " + str(average(ord_accuracies)))
+    print("Average mord: " + str(average(mord_accuracies)))
