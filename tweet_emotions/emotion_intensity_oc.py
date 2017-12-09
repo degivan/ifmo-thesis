@@ -93,6 +93,16 @@ def add_features(X, tweets, emotion):
     return np.array(X_list)
 
 
+def filter_tweets(tweets, noisy_words):
+    result = []
+    for tweet in tweets:
+        msg = tweet.message
+        for nw in noisy_words:
+            msg = msg.replace(nw, '')
+        result.append(Tweet(msg, tweet.res))
+    return result
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='File name')
     parser.add_argument('-f', type=file, dest='data', help='data')
@@ -101,7 +111,7 @@ if __name__ == '__main__':
 
     tweets = get_tweets(args.data.read())
     print_class_distribution()
-
+    tweets = filter_tweets(tweets, ['the'])
     X, Y = get_XY(tweets)
     X = add_features(X, tweets, args.emotion)
     Y = [int(y) for y in Y]
