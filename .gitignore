@@ -1,3 +1,7 @@
 .idea
 .gitignore
 tweet_parser.pyc
+NRC-AffectIntensity-Lexicon.txt
+distribution_anger.png
+tweet_emotions/__init__.pyc
+tweet_emotions/features.pyc

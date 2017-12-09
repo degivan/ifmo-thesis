@@ -2,17 +2,18 @@ import argparse
 from collections import defaultdict
 from itertools import takewhile
 
+from mord import *
 from numpy import average
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.model_selection import KFold
 from sklearn.naive_bayes import MultinomialNB
 
+from tweet_emotions.features import count_caps, count_symbol, starts_with_vowel
 from tweet_parser import *
-from mord import *
 
 
 def get_XY(tweets):
-    vectorizer = CountVectorizer()
+    vectorizer = CountVectorizer(max_features=900, ngram_range=(1, 3))
     X = vectorizer.fit_transform([t.message for t in tweets]).toarray()
     Y = [t.res for t in tweets]
     return X, Y
@@ -76,11 +77,20 @@ def test_ordinal_classifier(train_X, train_Y, test_X, test_Y, accuracies):
 
 
 def test_mord_classifier(train_X, train_Y, test_X, test_Y, accuracies):
-    comp_clf = LogisticIT(alpha=0, max_iter=10000)
+    comp_clf = LogisticSE(alpha=0, max_iter=1000)
     comp_clf.fit(np.array(train_X), np.array(train_Y))
     predicted = comp_clf.predict(np.array(test_X))
     acc = metrics.accuracy_score(np.array(test_Y), predicted)
     accuracies.append(acc)
+
+
+def add_features(X, tweets):
+    X_list = X.tolist()
+    for x, tweet in zip(X_list, tweets):
+        x.append(count_caps(tweet))
+        x.append(count_symbol(tweet, '!'))
+        # x.append(starts_with_vowel(tweet))
+    return np.array(X_list)
 
 
 if __name__ == '__main__':
@@ -92,11 +102,12 @@ if __name__ == '__main__':
     print_class_distribution()
 
     X, Y = get_XY(tweets)
+    X = add_features(X, tweets)
     Y = [int(y) for y in Y]
-    kf = KFold(n_splits=5, shuffle=True)
+    kf = KFold(n_splits=10, shuffle=True)
     basic_accuracies = []
     ord_accuracies = []
-    mord_accuracies = []
+    # mord_accuracies = []
     for train_index, test_index in kf.split(X):
         train_X = filter_index(X, train_index)
         train_Y = filter_index(Y, train_index)
@@ -104,7 +115,7 @@ if __name__ == '__main__':
         test_Y = filter_index(Y, test_index)
         test_basic_classifier(train_X, train_Y, test_X, test_Y, basic_accuracies)
         test_ordinal_classifier(train_X, train_Y, test_X, test_Y, ord_accuracies)
-        test_mord_classifier(train_X, train_Y, test_X, test_Y, mord_accuracies)
+        # test_mord_classifier(train_X, train_Y, test_X, test_Y, mord_accuracies)
     print("Average basic: " + str(average(basic_accuracies)))
     print("Average ordinal: " + str(average(ord_accuracies)))
-    print("Average mord: " + str(average(mord_accuracies)))
+    # print("Average mord: " + str(average(mord_accuracies)))
