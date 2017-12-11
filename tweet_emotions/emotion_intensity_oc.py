@@ -4,16 +4,20 @@ from itertools import takewhile
 
 from mord import *
 from numpy import average
+from sklearn.ensemble import AdaBoostClassifier
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.model_selection import KFold
 from sklearn.naive_bayes import MultinomialNB
+from sklearn.neural_network import MLPClassifier
+from sklearn.svm import LinearSVC, SVC
+from sklearn.metrics import accuracy_score, f1_score
 
-from tweet_emotions.features import count_caps, count_symbol, count_intensity
+from features.features import count_caps, count_symbol, count_intensity
 from tweet_parser import *
 
 
 def get_XY(tweets):
-    vectorizer = CountVectorizer(max_features=900, ngram_range=(1, 3))
+    vectorizer = CountVectorizer(max_features=100, ngram_range=(1, 3))
     X = vectorizer.fit_transform([t.message for t in tweets]).toarray()
     Y = [t.res for t in tweets]
     return X, Y
@@ -25,7 +29,7 @@ def get_side(y, border):
 
 def get_classifier(X, Y, border):
     border_y = [get_side(y, border) for y in Y]
-    clf = MultinomialNB()
+    clf = MLPClassifier(alpha=1)
     clf.fit(X, border_y)
     return clf
 
@@ -40,15 +44,13 @@ def get_answer(results):
         return len(results) - from_end
 
 
-def count_accuracy(classifiers, X, Y):
-    total = len(Y)
-    correct = 0
+def count_metrics(classifiers, X, Y):
+    Y_pred = []
     for x, y in zip(X, Y):
         results = [clf.predict([x]) for clf in classifiers]
         final_result = get_answer(results)
-        if final_result == y:
-            correct += 1
-    return correct / float(total)
+        Y_pred.append(final_result)
+    return accuracy_score(Y, Y_pred), f1_score(Y, Y_pred, average='macro')
 
 
 def print_class_distribution():
@@ -63,25 +65,27 @@ def filter_index(X, index):
     return [X[i] for i in index]
 
 
-def test_basic_classifier(train_X, train_Y, test_X, test_Y, accuracies):
-    comp_clf = MultinomialNB()
+def test_basic_classifier(train_X, train_Y, test_X, test_Y, metrics):
+    comp_clf = MLPClassifier(alpha=1)
     comp_clf.fit(np.array(train_X), np.array(train_Y))
     predicted = comp_clf.predict(np.array(test_X))
-    acc = metrics.accuracy_score(np.array(test_Y), predicted)
-    accuracies.append(acc)
+    acc = accuracy_score(np.array(test_Y), predicted)
+    f1 = f1_score(np.array(test_Y), predicted, average='macro')
+    metrics.append((acc, f1))
 
 
-def test_ordinal_classifier(train_X, train_Y, test_X, test_Y, accuracies):
+def test_ordinal_classifier(train_X, train_Y, test_X, test_Y, metrics):
     classifiers = [get_classifier(train_X, train_Y, b) for b in [0, 1, 2]]
-    accuracies.append(count_accuracy(classifiers, test_X, test_Y))
+    metrics.append(count_metrics(classifiers, test_X, test_Y))
 
 
-def test_mord_classifier(train_X, train_Y, test_X, test_Y, accuracies):
+def test_mord_classifier(train_X, train_Y, test_X, test_Y, metrics):
     comp_clf = LogisticSE(alpha=0, max_iter=1000)
     comp_clf.fit(np.array(train_X), np.array(train_Y))
     predicted = comp_clf.predict(np.array(test_X))
-    acc = metrics.accuracy_score(np.array(test_Y), predicted)
-    accuracies.append(acc)
+    acc = accuracy_score(np.array(test_Y), predicted)
+    f1 = f1_score(np.array(test_Y), predicted)
+    metrics.append((acc, f1))
 
 
 def add_features(X, tweets, emotion):
@@ -116,17 +120,15 @@ if __name__ == '__main__':
     X = add_features(X, tweets, args.emotion)
     Y = [int(y) for y in Y]
     kf = KFold(n_splits=10, shuffle=True)
-    basic_accuracies = []
-    ord_accuracies = []
-    # mord_accuracies = []
-    for train_index, test_index in kf.split(X):
-        train_X = filter_index(X, train_index)
-        train_Y = filter_index(Y, train_index)
-        test_X = filter_index(X, test_index)
-        test_Y = filter_index(Y, test_index)
-        test_basic_classifier(train_X, train_Y, test_X, test_Y, basic_accuracies)
-        test_ordinal_classifier(train_X, train_Y, test_X, test_Y, ord_accuracies)
-        # test_mord_classifier(train_X, train_Y, test_X, test_Y, mord_accuracies)
-    print("Average basic: " + str(average(basic_accuracies)))
-    print("Average ordinal: " + str(average(ord_accuracies)))
-    # print("Average mord: " + str(average(mord_accuracies)))
+    for test_classifier in [test_basic_classifier, test_ordinal_classifier]:
+        metrics = []
+        for train_index, test_index in kf.split(X):
+            train_X = filter_index(X, train_index)
+            train_Y = filter_index(Y, train_index)
+            test_X = filter_index(X, test_index)
+            test_Y = filter_index(Y, test_index)
+            test_classifier(train_X, train_Y, test_X, test_Y, metrics)
+        accuracies = [x[0] for x in metrics]
+        f1_scores = [x[1] for x in metrics]
+        print ("Average accuracy:" + test_classifier.func_name + ": " + str(average(accuracies)))
+        print ("Average F1-score:" + test_classifier.func_name + ": " + str(average(f1_scores)))

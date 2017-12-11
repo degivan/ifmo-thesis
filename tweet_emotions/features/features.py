@@ -1,6 +1,6 @@
 from math import ceil
 
-from tweet_emotions.nrc_lexicon import get_lexicon
+from tweet_emotions.features.nrc_lexicon import get_lexicon
 
 
 def count_caps(tweet):
