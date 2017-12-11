@@ -17,7 +17,7 @@ from tweet_parser import *
 
 
 def get_XY(tweets):
-    vectorizer = CountVectorizer(max_features=100, ngram_range=(1, 3))
+    vectorizer = CountVectorizer(analyzer='char_wb', max_features=1000, ngram_range=(2, 8))
     X = vectorizer.fit_transform([t.message for t in tweets]).toarray()
     Y = [t.res for t in tweets]
     return X, Y
@@ -84,7 +84,7 @@ def test_mord_classifier(train_X, train_Y, test_X, test_Y, metrics):
     comp_clf.fit(np.array(train_X), np.array(train_Y))
     predicted = comp_clf.predict(np.array(test_X))
     acc = accuracy_score(np.array(test_Y), predicted)
-    f1 = f1_score(np.array(test_Y), predicted)
+    f1 = f1_score(np.array(test_Y), predicted, average='macro')
     metrics.append((acc, f1))
 
 
@@ -114,7 +114,6 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     tweets = get_tweets(args.data.read())
-    print_class_distribution()
     tweets = filter_tweets(tweets, ['the'])
     X, Y = get_XY(tweets)
     X = add_features(X, tweets, args.emotion)
