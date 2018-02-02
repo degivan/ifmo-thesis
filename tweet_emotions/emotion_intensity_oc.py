@@ -4,23 +4,15 @@ from itertools import takewhile
 
 from mord import *
 from numpy import average
-from sklearn.ensemble import AdaBoostClassifier
-from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.feature_selection import VarianceThreshold
+from sklearn.metrics import accuracy_score, f1_score
 from sklearn.model_selection import KFold
 from sklearn.naive_bayes import MultinomialNB
-from sklearn.neural_network import MLPClassifier
-from sklearn.svm import LinearSVC, SVC
-from sklearn.metrics import accuracy_score, f1_score
+from sklearn.svm import SVC
 
 from features.features import count_caps, count_symbol, count_intensity
+from tweet_emotions.features.basic_vectorizers import get_XY_word_ngrams
 from tweet_parser import *
-
-
-def get_XY(tweets):
-    vectorizer = CountVectorizer(analyzer='char_wb', max_features=1000, ngram_range=(2, 8))
-    X = vectorizer.fit_transform([t.message for t in tweets]).toarray()
-    Y = [t.res for t in tweets]
-    return X, Y
 
 
 def get_side(y, border):
@@ -29,7 +21,7 @@ def get_side(y, border):
 
 def get_classifier(X, Y, border):
     border_y = [get_side(y, border) for y in Y]
-    clf = MLPClassifier(alpha=1)
+    clf = MultinomialNB()
     clf.fit(X, border_y)
     return clf
 
@@ -66,7 +58,7 @@ def filter_index(X, index):
 
 
 def test_basic_classifier(train_X, train_Y, test_X, test_Y, metrics):
-    comp_clf = MLPClassifier(alpha=1)
+    comp_clf = MultinomialNB(alpha=1)
     comp_clf.fit(np.array(train_X), np.array(train_Y))
     predicted = comp_clf.predict(np.array(test_X))
     acc = accuracy_score(np.array(test_Y), predicted)
@@ -80,7 +72,7 @@ def test_ordinal_classifier(train_X, train_Y, test_X, test_Y, metrics):
 
 
 def test_mord_classifier(train_X, train_Y, test_X, test_Y, metrics):
-    comp_clf = LogisticSE(alpha=0, max_iter=1000)
+    comp_clf = LogisticSE(max_iter=10 ** 6)
     comp_clf.fit(np.array(train_X), np.array(train_Y))
     predicted = comp_clf.predict(np.array(test_X))
     acc = accuracy_score(np.array(test_Y), predicted)
@@ -112,14 +104,20 @@ if __name__ == '__main__':
     parser.add_argument('-f', type=file, dest='data', help='data')
     parser.add_argument('-e', type=str, dest='emotion', help='emotion')
     args = parser.parse_args()
-
     tweets = get_tweets(args.data.read())
+    problematic_words = {'but': 0, 'not': 0, 'although': 0}
+    for tweet in tweets:
+        for word in problematic_words.keys():
+            if word in tweet.message:
+                problematic_words[word] += 1
+    print problematic_words
     tweets = filter_tweets(tweets, ['the'])
-    X, Y = get_XY(tweets)
+    X, Y = get_XY_word_ngrams(tweets)
     X = add_features(X, tweets, args.emotion)
+    X = VarianceThreshold().fit_transform(X)
     Y = [int(y) for y in Y]
     kf = KFold(n_splits=10, shuffle=True)
-    for test_classifier in [test_basic_classifier, test_ordinal_classifier]:
+    for test_classifier in [test_basic_classifier, test_ordinal_classifier, test_mord_classifier]:
         metrics = []
         for train_index, test_index in kf.split(X):
             train_X = filter_index(X, train_index)

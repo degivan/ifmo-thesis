@@ -11,6 +11,7 @@ def draw_distribution(name):
     emotion_name = ntpath.basename(name).split('_')[1]
     results = [t.res for t in tweets]
     (mu, sigma) = norm.fit(results)
+    plt.xlabel('Intensity')
     n, bins, patches = plt.hist(results, 70, normed=1, facecolor='green', alpha=0.75)
     y = mlab.normpdf(bins, mu, sigma)
     plt.plot(bins, y, 'r--', linewidth=2)
