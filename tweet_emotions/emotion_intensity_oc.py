@@ -4,11 +4,13 @@ from itertools import takewhile
 
 from mord import *
 from numpy import average
+from sklearn.ensemble import AdaBoostClassifier
 from sklearn.feature_selection import VarianceThreshold
 from sklearn.metrics import accuracy_score, f1_score
 from sklearn.model_selection import KFold
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.svm import SVC
+from sklearn.tree import DecisionTreeClassifier
 
 from features.features import count_caps, count_symbol, count_intensity
 from tweet_emotions.features.basic_vectorizers import get_XY_word_ngrams
@@ -21,7 +23,7 @@ def get_side(y, border):
 
 def get_classifier(X, Y, border):
     border_y = [get_side(y, border) for y in Y]
-    clf = MultinomialNB()
+    clf = SVC()
     clf.fit(X, border_y)
     return clf
 
