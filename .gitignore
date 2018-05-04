@@ -6,3 +6,5 @@ distribution_anger.png
 tweet_emotions/__init__.pyc
 tweet_emotions/features.pyc
 /tweet_emotions/.ipynb_checkpoints/Diploma-checkpoint.ipynb
+tweet_emotions/*/*
+tweet_emotions/*.gz
