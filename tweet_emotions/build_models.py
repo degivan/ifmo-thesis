@@ -93,7 +93,7 @@ def run_competition_files(path_pattern):
     return em_tweets
     
 train_tweets = run_competition_files('train_data/EI-reg-en_%s_train.txt')
-test_tweets = run_competition_files('development_data/2018-EI-reg-En-%s-dev.txt')
+test_tweets = run_competition_files('train_data/EI-reg-en_%s_train.txt') # no reason to include test data here
 
 dirty_tweets =[]
 
